@@ -43,7 +43,7 @@
       <div class="features-grid">
         <div class="feature-item">
           <h3>🎮 Ovládání</h3>
-          <p>Lze ovládat analogovými joysticky i přímo z tohoto webu. Komunikaci s Arduinem zajišťuje Python (pyserial).</p>
+          <p>Lze ovládat analogovými joysticky i přes webové rozhraní v Pythonu (pyserial).</p>
         </div>
         <div class="feature-item">
           <h3>📺 Zobrazení</h3>
@@ -174,115 +174,30 @@
       </table>
     </section>
 
-    <!-- Sekce: Kód (načítá se ze souboru hotovy_kod.ino) -->
+    <!-- Sekce: Kód -->
     <section id="kod" class="card">
       <h2>Kód pro Arduino</h2>
       <p>Tento kód nahrajte do Arduina. Obsahuje podporu pro ovládání přes sériovou linku i přes fyzické joysticky.</p>
-      <p><a href="./hotovy_kod.ino" download class="buy-btn">⬇ Stáhnout hotovy_kod.ino</a></p>
-      <div class="code-container">
-        <pre><code>{{ kod }}</code></pre>
-      </div>
+      <p>
+        <a href="./hotovy_kod.ino" download class="buy-btn">⬇ Stáhnout hotovy_kod.ino</a>
+        <a href="https://github.com/patrikmician/6-DOS-RoboArm/blob/main/hotovy_kod.ino" target="_blank" class="buy-btn">Zobrazit kód na GitHubu</a>
+      </p>
     </section>
 
     <!-- Sekce: Ovládání -->
     <section id="ovladani" class="card">
       <h2>Webové ovládání Arduina</h2>
-
-      {% if zprava %}
-      <div class="flash {{ zprava[0] }}">{{ zprava[1] }}</div>
-      {% endif %}
-
-      <p>Připojte Arduino přes USB kabel k počítači, vyberte port a klikněte na <strong>Připojit</strong>.</p>
-
-      <div class="serial-status">
-        {% if pripojeno %}
-        <form method="post" action="/odpojit" class="inline-form">
-          <button class="main-btn">🔌 Odpojit Arduino</button>
-        </form>
-        <span class="status connected">Připojeno ({{ port }})</span>
-        {% else %}
-        <form method="post" action="/pripojit" class="inline-form">
-          <select name="port">
-            {% for hodnota, popis in porty %}
-            <option value="{{ hodnota }}">{{ popis }}</option>
-            {% endfor %}
-          </select>
-          <button class="main-btn">🔌 Připojit Arduino</button>
-        </form>
-        <span class="status disconnected">Odpojeno</span>
-        {% endif %}
-      </div>
-
-      <form method="post" action="/serva" class="control-panel">
-        <fieldset {{ disabled }}>
-          <button type="submit" class="main-btn">✔ Odeslat změny</button>
-
-          <div class="servo-control">
-            <label for="servo1">Servo 1 (Natočení kleští): <strong>{{ uhly[1] }}°</strong> <small>(rozsah 0–180°)</small></label>
-            <div class="slider-row">
-              <button type="submit" name="krok" value="1:-5" class="action-btn">−5</button>
-              <input type="range" id="servo1" name="servo1" min="0" max="180" value="{{ uhly[1] }}">
-              <button type="submit" name="krok" value="1:5" class="action-btn">+5</button>
-            </div>
-          </div>
-
-          <div class="servo-control">
-            <label for="servo2">Servo 2 (Sklon kleští): <strong>{{ uhly[2] }}°</strong> <small>(rozsah 50–130°)</small></label>
-            <div class="slider-row">
-              <button type="submit" name="krok" value="2:-5" class="action-btn">−5</button>
-              <input type="range" id="servo2" name="servo2" min="50" max="130" value="{{ uhly[2] }}">
-              <button type="submit" name="krok" value="2:5" class="action-btn">+5</button>
-            </div>
-          </div>
-
-          <div class="servo-control">
-            <label for="servo3">Servo 3 (Předloktí): <strong>{{ uhly[3] }}°</strong> <small>(rozsah 0–180°)</small></label>
-            <div class="slider-row">
-              <button type="submit" name="krok" value="3:-5" class="action-btn">−5</button>
-              <input type="range" id="servo3" name="servo3" min="0" max="180" value="{{ uhly[3] }}">
-              <button type="submit" name="krok" value="3:5" class="action-btn">+5</button>
-            </div>
-          </div>
-
-          <div class="servo-control">
-            <label for="servo4">Servo 4 (Hlavní rameno): <strong>{{ uhly[4] }}°</strong> <small>(rozsah 10–170°)</small></label>
-            <div class="slider-row">
-              <button type="submit" name="krok" value="4:-5" class="action-btn">−5</button>
-              <input type="range" id="servo4" name="servo4" min="10" max="170" value="{{ uhly[4] }}">
-              <button type="submit" name="krok" value="4:5" class="action-btn">+5</button>
-            </div>
-          </div>
-
-          <div class="servo-control">
-            <label for="servo5">Servo 5 (Základna): <strong>{{ uhly[5] }}°</strong> <small>(rozsah 0–180°)</small></label>
-            <div class="slider-row">
-              <button type="submit" name="krok" value="5:-5" class="action-btn">−5</button>
-              <input type="range" id="servo5" name="servo5" min="0" max="180" value="{{ uhly[5] }}">
-              <button type="submit" name="krok" value="5:5" class="action-btn">+5</button>
-            </div>
-          </div>
-        </fieldset>
-      </form>
-      <p class="hint">Posuvníkem nastavte úhel a potvrďte tlačítkem <em>Odeslat změny</em>, nebo použijte −5 / +5 pro jemný posun.</p>
-
-      <div class="servo-control">
-        <label>Kleště (Servo 0): <strong>{{ uhly[0] }}°</strong></label>
-        <div class="btn-group">
-          <form method="post" action="/kleste/otevrit"><button class="action-btn" {{ disabled }}>Otevřít</button></form>
-          <form method="post" action="/kleste/zavrit"><button class="action-btn" {{ disabled }}>Zavřít</button></form>
-        </div>
-      </div>
-
-      <div class="servo-control">
-        <label>Paměť a reset:</label>
-        <div class="btn-group">
-          <form method="post" action="/prikaz/p"><button class="action-btn" {{ disabled }}>💾 Uložit pozice</button></form>
-          <form method="post" action="/prikaz/r"><button class="action-btn" {{ disabled }}>↺ Reset na výchozí</button></form>
-        </div>
-      </div>
-
-      <h3>Komunikace s Arduinem</h3>
-      <pre class="log">{{ log }}</pre>
+      <p>Ovládání ramene z webu běží v Pythonu (Flask + pyserial) přímo na tvém počítači, protože GitHub Pages Python nespouští. Postup:</p>
+      <ol>
+        <li>Stáhni si projekt z <a href="https://github.com/patrikmician/6-DOS-RoboArm" target="_blank">GitHubu</a> (<em>Code → Download ZIP</em>) a rozbal ho.</li>
+        <li>Nahraj <code>hotovy_kod.ino</code> do Arduina a nech ho připojené přes USB.</li>
+        <li>V terminálu ve složce projektu spusť:<br>
+          <code>pip install -r requirements.txt</code><br>
+          <code>python app.py</code></li>
+        <li>Otevři ovládací stránku:
+          <a href="http://127.0.0.1:5000/ovladani" class="buy-btn">http://127.0.0.1:5000/ovladani</a></li>
+      </ol>
+      <p>Odkaz funguje jen tehdy, když je <code>app.py</code> spuštěný. Bez Arduina si můžeš ovládání vyzkoušet v režimu <strong>SIMULACE</strong>.</p>
     </section>
 
   </div>
