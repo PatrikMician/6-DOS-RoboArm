@@ -2,6 +2,8 @@
 
 An open-source 6-axis robotic arm powered by **Arduino**, featuring I2C servo driving (**PCA9685**), real-time **LCD status display**, physical **joystick controls**, and a **Python web interface** (Flask + pyserial) for controlling the arm from your browser over USB.
 
+🌐 **Project website:** https://patrikmician.github.io/6-DOS-RoboArm/
+
 ---
 
 ## Features
@@ -9,7 +11,7 @@ An open-source 6-axis robotic arm powered by **Arduino**, featuring I2C servo dr
 * **6 Degrees of Freedom (6-DOF):** Full control over base rotation, shoulder, forearm, wrist tilt, wrist rotation, and gripper.
 * **Dual Control Modes:**
   * **Physical Joysticks:** Tactile control using two 2-axis analog joysticks with pushbuttons.
-  * **Web Interface:** A small Python (Flask) server talks to the Arduino over USB serial; you control the arm from any browser. The web page contains **no JavaScript**.
+  * **Web Interface:** A small Python (Flask) server talks to the Arduino over USB serial; you control the arm from any browser. The web pages contain **no JavaScript**.
 * **Real-time LCD Feedback:** 16x2 I2C display shows current angles for the servos $S_1$ to $S_5$ and operational messages.
 * **Smart Motion Control:** Smooth stepping for servo protection, EEPROM position saving, and an automated routine ("Dance mode").
 * **Simulation mode:** try the web interface without any hardware.
@@ -43,7 +45,7 @@ The website (`index.html`) also contains a parts list with shopping links.
 
 ### 1. Hardware Assembly & Wiring
 
-1. Mount the servos to your 6-DOF robotic arm frame and connect them to the **PCA9685** channels **0–5** (see the servo table below).
+1. Mount the servos to your 6-DOF robotic arm frame and connect them to the **PCA9685** channels **0–5** (see the servo map in *Controls Summary*).
 2. Connect the **PCA9685** driver and the **I2C LCD** to the Arduino via the I2C bus:
 
    | Module pin | Arduino |
@@ -78,7 +80,7 @@ The website (`index.html`) also contains a parts list with shopping links.
 
 ### 3. Web Interface Setup (Python)
 
-Download or clone the repository, open a terminal in the project folder and run:
+Download or clone the repository (*Code → Download ZIP* and unzip it), open a terminal in the project folder and run:
 
 **Windows**
 ```bash
@@ -96,16 +98,17 @@ pip install -r requirements.txt
 python3 app.py
 ```
 
-Then open **http://127.0.0.1:5000** in your browser (any modern browser works).
+Then open **http://127.0.0.1:5000/ovladani** in your browser (any modern browser works).
 
-1. Scroll to the **Webové ovládání Arduina** (web control) section.
-2. Select the Arduino port from the list (e.g. `COM3` on Windows, `/dev/ttyUSB0` or `/dev/ttyACM0` on Linux, `/dev/cu.usbserial-…` on macOS) and click **Připojit Arduino** (Connect).
-3. Set an angle with a slider and confirm with **Odeslat změny** (Send changes), or use the **−5 / +5** buttons for fine adjustment.
-4. Use the **Otevřít / Zavřít** buttons for the gripper, **Uložit pozice** to save positions to EEPROM and **Reset na výchozí** to return to the default pose.
+1. Select the Arduino port from the list (e.g. `COM3` on Windows, `/dev/ttyUSB0` or `/dev/ttyACM0` on Linux, `/dev/cu.usbserial-…` on macOS) and click **Připojit Arduino** (Connect).
+2. Set an angle with a slider and confirm with **Odeslat změny** (Send changes), or use the **−5 / +5** buttons for fine adjustment.
+3. Use the **Otevřít / Zavřít** buttons for the gripper, **Uložit pozice** to save positions to EEPROM and **Reset na výchozí** to return to the default pose.
+
+To stop the server press `Ctrl+C` in the terminal. Next time you only need to activate the environment (`.venv\Scripts\activate` / `source .venv/bin/activate`) and run `python app.py` again.
 
 > **Try it without hardware:** pick **SIMULACE** in the port list. Nothing is sent to a real device, but you can test the whole interface.
 
-> **Always open the page through `http://127.0.0.1:5000`.** If you open `index.html` directly from disk (or with VS Code Live Server) you will see raw `{{ ... }}` and `{% ... %}` text, because the page is a Flask template that only Python can render.
+> `index.html` and `galerie.html` are static pages (they also work on GitHub Pages). Only the control page `/ovladani` needs the Python server, because it talks to the Arduino over USB.
 
 The server listens on `127.0.0.1` only (your own computer) and has no login, so don't expose it to a network.
 
@@ -143,7 +146,7 @@ The web interface only sends plain text lines over USB serial (**9600 baud**, ne
 
 At the top of `app.py` you can change:
 
-* `LIMITS` – allowed angle range for each slider (protects the mechanics of your arm)
+* `LIMITY` – allowed angle range for each slider (protects the mechanics of your arm)
 * `KLESTE_OTEVRENO` / `KLESTE_ZAVRENO` – gripper angles used by the web buttons (check them on your own arm before using!)
 * `VYCHOZI` – default pose (must match `loadPositions()` in `hotovy_kod.ino`)
 
@@ -155,12 +158,14 @@ Look and feel is in `style.css` (colors are at the top in the `:root` block). Fo
 
 | Problem | Solution |
 | :--- | :--- |
-| Raw `{{ ... }}` / `{% ... %}` shown on the page | Open **http://127.0.0.1:5000** (started with `python app.py`), not the HTML file directly or Live Server |
+| `TemplateNotFound: ovladani.html` | The file must be in the `templates/` folder (`templates/ovladani.html`), not next to `app.py` |
+| Page does not open at `127.0.0.1:5000` | Make sure `python app.py` is still running in the terminal and that you opened `/ovladani` |
 | Arduino port is missing in the list | Check the USB cable (it must carry data), install the CH340 driver, reconnect the board and reload the page |
 | "could not open port" / "Access denied" | Close the Arduino IDE Serial Monitor and any other program using the port |
 | `Permission denied` on Linux | Add yourself to the serial group: `sudo usermod -a -G dialout $USER`, then log out and in again |
 | Arduino restarts when connecting | Normal – opening the serial port resets most Arduino boards; the server waits 2 s for it |
 | `ModuleNotFoundError: flask` / `serial` | Activate the virtual environment and run `pip install -r requirements.txt` |
+| PowerShell refuses to run `activate` | Run `Set-ExecutionPolicy -Scope Process Bypass` first, or use Command Prompt |
 | LCD shows nothing | Check the I2C address (`0x27`; some displays use `0x3F`) and the contrast potentiometer on the back of the I2C adapter |
 | Servos jitter or the Arduino resets | The servos need their own 5V supply with enough current (MG996R can draw over 1 A each under load) |
 
@@ -170,9 +175,11 @@ Look and feel is in `style.css` (colors are at the top in the `:root` block). Fo
 
 ```text
 ├── app.py              # Python (Flask) server + serial communication with the Arduino
-├── index.html          # Web dashboard (Flask template)
-├── galerie.html        # Photo gallery
-├── style.css           # Styling for both pages
+├── index.html          # Static web page (also hosted on GitHub Pages)
+├── galerie.html        # Photo gallery (static)
+├── style.css           # Styling for all pages
+├── templates/
+│   └── ovladani.html   # Control page (Flask template, needs the Python server)
 ├── hotovy_kod.ino      # Arduino firmware
 ├── requirements.txt    # Python dependencies (Flask, pyserial)
 ├── foto/               # Photos for the gallery
