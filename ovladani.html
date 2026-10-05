@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ovládání – Robotické Rameno</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <div class="logo">RoboArm <span>v1.0</span></div>
+    <ul class="nav-links">
+      <li><a href="/index.html#o-robotu">O robotu</a></li>
+      <li><a href="/index.html#navod">Jak ovládat</a></li>
+      <li><a href="/galerie.html">Galerie</a></li>
+      <li><a href="/index.html#dily">Kde koupit díly</a></li>
+      <li><a href="/index.html#kod">Kód Arduino</a></li>
+      <li><a href="/ovladani" class="active">Ovládání</a></li>
+    </ul>
+  </nav>
+
+  <div class="container">
+    <section class="card">
+      <h2>Webové ovládání Arduina</h2>
+
+      {% if zprava %}
+      <div class="flash {{ zprava[0] }}">{{ zprava[1] }}</div>
+      {% endif %}
+
+      <p>Připojte Arduino přes USB kabel k počítači, vyberte port a klikněte na <strong>Připojit</strong>.</p>
+
+      <div class="serial-status">
+        {% if pripojeno %}
+        <form method="post" action="/odpojit" class="inline-form">
+          <button class="main-btn">🔌 Odpojit Arduino</button>
+        </form>
+        <span class="status connected">Připojeno ({{ port }})</span>
+        {% else %}
+        <form method="post" action="/pripojit" class="inline-form">
+          <select name="port">
+            {% for hodnota, popis in porty %}
+            <option value="{{ hodnota }}">{{ popis }}</option>
+            {% endfor %}
+          </select>
+          <button class="main-btn">🔌 Připojit Arduino</button>
+        </form>
+        <span class="status disconnected">Odpojeno</span>
+        {% endif %}
+      </div>
+
+      <form method="post" action="/serva" class="control-panel">
+        <fieldset {{ disabled }}>
+          <button type="submit" class="main-btn">✔ Odeslat změny</button>
+
+          {% for id, nazev, lo, hi in serva %}
+          <div class="servo-control">
+            <label for="servo{{ id }}">Servo {{ id }} ({{ nazev }}): <strong>{{ uhly[id] }}°</strong> <small>(rozsah {{ lo }}–{{ hi }}°)</small></label>
+            <div class="slider-row">
+              <button type="submit" name="krok" value="{{ id }}:-5" class="action-btn">−5</button>
+              <input type="range" id="servo{{ id }}" name="servo{{ id }}" min="{{ lo }}" max="{{ hi }}" value="{{ uhly[id] }}">
+              <button type="submit" name="krok" value="{{ id }}:5" class="action-btn">+5</button>
+            </div>
+          </div>
+          {% endfor %}
+        </fieldset>
+      </form>
+      <p class="hint">Posuvníkem nastavte úhel a potvrďte tlačítkem <em>Odeslat změny</em>, nebo použijte −5 / +5 pro jemný posun.</p>
+
+      <div class="servo-control">
+        <label>Kleště (Servo 0): <strong>{{ uhly[0] }}°</strong></label>
+        <div class="btn-group">
+          <form method="post" action="/kleste/otevrit"><button class="action-btn" {{ disabled }}>Otevřít</button></form>
+          <form method="post" action="/kleste/zavrit"><button class="action-btn" {{ disabled }}>Zavřít</button></form>
+        </div>
+      </div>
+
+      <div class="servo-control">
+        <label>Paměť a reset:</label>
+        <div class="btn-group">
+          <form method="post" action="/prikaz/p"><button class="action-btn" {{ disabled }}>💾 Uložit pozice</button></form>
+          <form method="post" action="/prikaz/r"><button class="action-btn" {{ disabled }}>↺ Reset na výchozí</button></form>
+        </div>
+      </div>
+
+      <h3>Komunikace s Arduinem</h3>
+      <pre class="log">{{ log }}</pre>
+    </section>
+  </div>
+
+</body>
+</html>
