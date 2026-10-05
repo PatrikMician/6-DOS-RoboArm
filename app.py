@@ -4,7 +4,8 @@ RoboArm – webové ovládání (Flask + pyserial), bez JavaScriptu.
 Spuštění:
     pip install -r requirements.txt
     python app.py
-a otevři http://127.0.0.1:5000
+Ovládání: http://127.0.0.1:5000/ovladani
+(index.html a galerie.html jsou statické a běží i na GitHub Pages)
 """
 import threading
 import time
@@ -28,6 +29,7 @@ SIMULACE = "SIMULACE"
 # Nastavení (uprav podle svého ramene)
 # ---------------------------------------------------------------------------
 LIMITY = {1: (0, 180), 2: (50, 130), 3: (0, 180), 4: (10, 170), 5: (0, 180)}  # min, max
+NAZVY = {1: "Natočení kleští", 2: "Sklon kleští", 3: "Předloktí", 4: "Hlavní rameno", 5: "Základna"}
 KLESTE_OTEVRENO = 100
 KLESTE_ZAVRENO = 60
 VYCHOZI = {0: 130, 1: 100, 2: 150, 3: 0, 4: 180, 5: 70}  # jako loadPositions() v .ino
@@ -120,7 +122,7 @@ class Rameno:
 
 
 rameno = Rameno()
-app = Flask(__name__, template_folder=".", static_folder=None)  # index.html je šablona
+app = Flask(__name__, static_folder=None)  # šablona je v templates/ovladani.html
 
 
 def omez(servo, hodnota):
@@ -137,33 +139,22 @@ def najdi_porty():
 
 
 def udelej(akce, ok=None):
-    """Provede akci a uloží zprávu pro stránku, pak přesměruje zpět na Ovládání."""
+    """Provede akci, uloží zprávu pro stránku a přesměruje zpět na ovládání."""
     try:
         akce()
         rameno.zprava = ("ok", ok) if ok else None
     except Exception as e:
         rameno.zprava = ("chyba", str(e))
-    return redirect("/#ovladani")
+    return redirect("/ovladani")
 
 
 # ---------------------------------------------------------------------------
-# Stránky a soubory (cesty stejné jako v HTML: ./style.css, ./foto/..., ...)
+# Statické stránky a soubory (stejné jako na GitHub Pages)
 # ---------------------------------------------------------------------------
 @app.route("/")
 @app.route("/index.html")
 def index():
-    zprava, rameno.zprava = rameno.zprava, None
-    return render_template(
-        "index.html",
-        kod=(ZAKLAD / "hotovy_kod.ino").read_text(encoding="utf-8"),
-        uhly=rameno.uhly,
-        log="\n".join(rameno.log) or "(zatím nic)",
-        porty=najdi_porty(),
-        pripojeno=rameno.ser is not None,
-        port=rameno.port,
-        disabled="" if rameno.ser is not None else "disabled",
-        zprava=zprava,
-    )
+    return send_from_directory(ZAKLAD, "index.html")
 
 
 @app.route("/galerie.html")
@@ -192,8 +183,25 @@ def zip_soubory(nazev):
 
 
 # ---------------------------------------------------------------------------
-# Ovládání (formuláře)
+# Ovládání ramene (jediná dynamická stránka)
 # ---------------------------------------------------------------------------
+@app.route("/ovladani")
+def ovladani():
+    zprava, rameno.zprava = rameno.zprava, None
+    pripojeno = rameno.ser is not None
+    return render_template(
+        "ovladani.html",
+        serva=[(i, NAZVY[i], *LIMITY[i]) for i in LIMITY],
+        uhly=rameno.uhly,
+        log="\n".join(rameno.log) or "(zatím nic)",
+        porty=najdi_porty(),
+        pripojeno=pripojeno,
+        port=rameno.port,
+        disabled="" if pripojeno else "disabled",
+        zprava=zprava,
+    )
+
+
 @app.post("/pripojit")
 def pripojit():
     return udelej(lambda: rameno.pripojit(request.form["port"]), "Připojeno.")
